@@ -10,7 +10,7 @@ const applicationSchema = new mongoose.Schema({
   address: { type: String },
   city: { type: String },
   state: { type: String },
-  status: { type: String, enum: ['pending', 'under review', 'approved', 'rejected'], default: 'pending' },
+  status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   notes: String,
   approvedBy: { type: String }
 }, { timestamps: true });

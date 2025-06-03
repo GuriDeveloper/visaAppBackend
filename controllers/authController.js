@@ -101,10 +101,10 @@ exports.logout = async (req, res) => {
 
 exports.createAccount = async (req, res) => {
   try {
-    const { name, email, role ,isActive} = req.body
+    const { name, email, role, isActive, password } = req.body
     const exisitingUser = await User.find({ email })
     if (exisitingUser.length) return res.status(409).json({ status: 'error', message: "user already exists" })
-    const user = await User.create({ name, email, role ,isActive})
+    const user = await User.create({ name, email, role, isActive, password })
     return res.status(201).json({ status: "OK", message: "User created" })
   } catch (error) {
     return res.status(500).json({
@@ -133,7 +133,26 @@ exports.disableAccount = async (req, res) => {
   }
 }
 
-exports.sendAccountDetails = async(req,res)=>{
+exports.enableAccount = async(req,res)=>{
+  try {
+    const userId = req.params.id;
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: { isActive: true } },
+      { new: true, select: 'name email isActive role' } // returns only specific fields
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.status(200).json({ message: 'User Activated!', status: "OK" });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+exports.sendAccountDetails = async (req, res) => {
   try {
     const users = await User.find({ role: { $ne: 'admin' } }).select('-password -otp'); // exclude sensitive fields
     return res.status(200).json({ users });

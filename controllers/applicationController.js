@@ -12,6 +12,7 @@
 //   notes: String,
 
 const Application = require("../models/Application")
+const User = require("../models/User")
 
 exports.submitApp = async (req, res) => {
     try {
@@ -57,7 +58,7 @@ exports.approveApplication = async (req, res) => {
     try {
         const { userId } = req.params; 
         const approverId = req.id.id;  // ID of the user performing the approval (from auth middleware)
-
+        const {approvedStatus,officerComment} = req.body
     // Fetch approver's name
         const approver = await User.findById(approverId).select('name');
         if (!approver) {
@@ -68,7 +69,8 @@ exports.approveApplication = async (req, res) => {
             { user: userId },
             {
                 $set: {
-                status: 'approved',
+                status: approvedStatus,
+                notes:officerComment,
                 approvedBy: approver.name
                 }
             },
@@ -88,4 +90,20 @@ exports.approveApplication = async (req, res) => {
     } catch (error) {
         return res.status(500).json({ error: 'Internal server error' });
     }
+}
+
+exports.userDetail = async(req,res)=>{
+    const { userId } = req.params;
+    const approverId = req.id.id; 
+
+    const user = await User.findById(userId)
+    try {
+        if (!user) {
+            return res.status(404).json({ error: 'User not found!' });
+        }
+        return res.status(200).json({userDetails:user,"message":"User Details!"})
+    } catch (error) {
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+    
 }

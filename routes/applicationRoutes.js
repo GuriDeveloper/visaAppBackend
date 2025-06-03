@@ -1,4 +1,4 @@
-const { submitApp, applications } = require('../controllers/applicationController')
+const { submitApp, applications, userDetail } = require('../controllers/applicationController')
 const protect = require('../middlewares/auth')
 const upload = require('../middlewares/uploadMiddleware')
 
@@ -10,6 +10,7 @@ router.post('/submit',protect,upload.fields([
     { name: 'passport', maxCount: 1 }
   ]),submitApp)
   .get('/allUsers',protect,applications)
+  .get('/user/:id',protect,userDetail)
   
 
 module.exports = router
