@@ -93,10 +93,10 @@ exports.approveApplication = async (req, res) => {
 }
 
 exports.userDetail = async(req,res)=>{
-    const { userId } = req.params;
+    const { id } = req.id;
     const approverId = req.id.id; 
 
-    const user = await User.findById(userId)
+    const user = await Application.findById(id)
     try {
         if (!user) {
             return res.status(404).json({ error: 'User not found!' });
