@@ -101,10 +101,10 @@ exports.logout = async (req, res) => {
 
 exports.createAccount = async (req, res) => {
   try {
-    const { name, email, role } = req.body
+    const { name, email, role ,isActive} = req.body
     const exisitingUser = await User.find({ email })
     if (exisitingUser.length) return res.status(409).json({ status: 'error', message: "user already exists" })
-    const user = await User.create({ name, email, role })
+    const user = await User.create({ name, email, role ,isActive})
     return res.status(201).json({ status: "OK", message: "User created" })
   } catch (error) {
     return res.status(500).json({
