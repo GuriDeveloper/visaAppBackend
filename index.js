@@ -48,6 +48,7 @@ server.use(cors({
 // Middleware
 server.use(cookieParser());
 server.use(express.json());
+server.use('/uploads', express.static('uploads'));
 
 // Optional test route
 // server.get('/', (req, res) => {

@@ -36,6 +36,7 @@ exports.submitApp = async (req, res) => {
         await newApplication.save()
         return res.status(201).json({ status: "OK", message: "Application Submitted successfully!" })
     } catch (error) {
+        console.log(error,'get error here ')
         res.status(500).json({ error: 'Server error' });
     }
 }
@@ -96,7 +97,8 @@ exports.userDetail = async(req,res)=>{
     const { id } = req.id;
     const approverId = req.id.id; 
 
-    const user = await Application.findById(id)
+    const user = await Application.find({ user: id })
+    console.log(user,id,'get here ')
     try {
         if (!user) {
             return res.status(404).json({ error: 'User not found!' });
