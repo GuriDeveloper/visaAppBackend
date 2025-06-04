@@ -45,7 +45,7 @@ exports.login = async (req, res) => {
         secure: process.env.NODE_ENV === 'production', // HTTPS in production
         sameSite: 'Strict',         // CSRF protection
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      }).json({ status: "OK", message: "Login Successful!",userID: user._id})
+      }).json({ status: "OK", message: "Login Successful!",userID: user._id,role:user.role})
     } else {
       return res.status(401).json({ status: 'error', message: "Invalid credentials!" })
     }

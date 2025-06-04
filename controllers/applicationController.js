@@ -11,6 +11,7 @@
 //   status: { type: String, enum: ['pending', 'under review', 'approved', 'rejected'], default: 'pending' },
 //   notes: String,
 
+const { transporter } = require("../config/mailer")
 const Application = require("../models/Application")
 const User = require("../models/User")
 
@@ -66,6 +67,7 @@ exports.approveApplication = async (req, res) => {
             return res.status(404).json({ error: 'Approver not found' });
         }
 
+
         const updatedApp = await Application.findOneAndUpdate(
             { user: userId },
             {
@@ -81,6 +83,16 @@ exports.approveApplication = async (req, res) => {
         if (!updatedApp) {
         return res.status(404).json({ error: 'Application not found for the given user' });
         }
+
+        // find user email and send the email to user
+        const findUser = await User.findById(userId).select('email')
+
+        const sendEmail = await transporter.sendMail({
+            from:process.env.EMAIL_USER,
+            to:findUser,
+            subject:'Application Approved',
+            html:`<h2>Your Applcation is Accepted!!</h2>`
+        })
 
         return res.status(200).json({
             message: 'Application approved successfully',
