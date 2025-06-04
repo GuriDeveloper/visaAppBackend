@@ -54,7 +54,8 @@ exports.submitApp = async (req, res) => {
     // Check if user has already submitted an application
     const existingApp = await Application.findOne({ user: userId });
     if (existingApp) {
-      return res.status(400).json({ status: 'error', message: 'You have already submitted an application.' });
+        
+      return res.status(402).json({ status: 'error', message: 'You have already submitted an application.' });
     }
 
     const newApplication = new Application({
