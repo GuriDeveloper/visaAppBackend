@@ -15,32 +15,70 @@ const { transporter } = require("../config/mailer")
 const Application = require("../models/Application")
 const User = require("../models/User")
 
-exports.submitApp = async (req, res) => {
-    try {
-        const { father, address, city, state, visaType } = req.body
-        const photo = req.files['photo']?.[0]?.filename
-        const aadhar = req.files['aadhar']?.[0]?.filename
-        const passport = req.files['passport']?.[0]?.filename
-        const userId = req.id.id;
+// exports.submitApp = async (req, res) => {
+//     try {
+//         const { father, address, city, state, visaType } = req.body
+//         const photo = req.files['photo']?.[0]?.filename
+//         const aadhar = req.files['aadhar']?.[0]?.filename
+//         const passport = req.files['passport']?.[0]?.filename
+//         const userId = req.id.id;
 
-        const newApplication = new Application({
-            user: userId,
-            visaType,
-            father,
-            address,
-            city,
-            state,
-            photo: photo || '',
-            aadhar: aadhar || '',
-            passport: passport || ''
-        })
-        await newApplication.save()
-        return res.status(201).json({ status: "OK", message: "Application Submitted successfully!" })
-    } catch (error) {
-        console.log(error,'get error here ')
-        res.status(500).json({ error: 'Server error' });
+//         const newApplication = new Application({
+//             user: userId,
+//             visaType,
+//             father,
+//             address,
+//             city,
+//             state,
+//             photo: photo || '',
+//             aadhar: aadhar || '',
+//             passport: passport || ''
+//         })
+//         await newApplication.save()
+//         return res.status(201).json({ status: "OK", message: "Application Submitted successfully!" })
+//     } catch (error) {
+//         console.log(error,'get error here ')
+//         res.status(500).json({ error: 'Server error' });
+//     }
+// }
+
+
+exports.submitApp = async (req, res) => {
+  try {
+    const { father, address, city, state, visaType } = req.body;
+    const photo = req.files['photo']?.[0]?.filename;
+    const aadhar = req.files['aadhar']?.[0]?.filename;
+    const passport = req.files['passport']?.[0]?.filename;
+    const userId = req.id.id;
+
+    // Check if user has already submitted an application
+    const existingApp = await Application.findOne({ user: userId });
+    if (existingApp) {
+      return res.status(400).json({ status: 'error', message: 'You have already submitted an application.' });
     }
-}
+
+    const newApplication = new Application({
+      user: userId,
+      visaType,
+      father,
+      address,
+      city,
+      state,
+      photo: photo || '',
+      aadhar: aadhar || '',
+      passport: passport || ''
+    });
+
+    await newApplication.save();
+
+    return res.status(201).json({ status: 'OK', message: 'Application Submitted successfully!' });
+  } catch (error) {
+    console.log(error, 'get error here ');
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+
 
 exports.applications = async (req, res) => {
     try {

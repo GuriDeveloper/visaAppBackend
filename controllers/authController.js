@@ -33,6 +33,10 @@ exports.login = async (req, res) => {
   try {
     if (!email || !password) return res.status(400).json({ status: "error", message: "All fields are required!" })
     const user = await User.findOne({ email });
+  if(user?.isActive===false){
+    return res.status(404).json({ status: "error", message: "User is deactivated!" })
+  }
+  console.log(user,'get user here ')
     // console.log('user  : ',user)
     if (!user) return res.status(404).json({ status: "error", message: "User not found!" })
     const comparePassword = await bcrypt.compare(password, user.password)
@@ -99,20 +103,59 @@ exports.logout = async (req, res) => {
     .json({ status: 'OK', message: 'Logged out successfully' });
 };
 
+// exports.createAccount = async (req, res) => {
+//   try {
+//     const { name, email, role, isActive, password } = req.body
+//     // const exisitingUser = await User.find({ email })
+//     const existingUser = await User.findOne({ email });
+// if (existingUser) {
+//   return res.status(409).json({ status: 'error', message: "User already exists" });
+// }
+//     // console.log(exisitingUser,'exist')
+//     // if (exisitingUser.length) return res.status(409).json({ status: 'error', message: "user already exists" })
+//     const user = await User.create({ name, email, role, isActive, password })
+//     return res.status(201).json({ status: "OK", message: "User created" })
+//   } catch (error) {
+//     return res.status(500).json({
+//       status: 'error',
+//       message: 'Something went wrong. Please try again later.',
+//     });
+//   }
+// }
+// const bcrypt = require('bcrypt');
+
 exports.createAccount = async (req, res) => {
   try {
-    const { name, email, role, isActive, password } = req.body
-    const exisitingUser = await User.find({ email })
-    if (exisitingUser.length) return res.status(409).json({ status: 'error', message: "user already exists" })
-    const user = await User.create({ name, email, role, isActive, password })
-    return res.status(201).json({ status: "OK", message: "User created" })
+    const { name, email, role, isActive, password } = req.body;
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ status: 'error', message: "User already exists" });
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create the user with hashed password
+    const user = await User.create({
+      name,
+      email,
+      role,
+      isActive,
+      password: hashedPassword
+    });
+
+    return res.status(201).json({ status: "OK", message: "User created" });
   } catch (error) {
+    console.error("Error in createAccount:", error);
     return res.status(500).json({
       status: 'error',
       message: 'Something went wrong. Please try again later.',
     });
   }
-}
+};
+
 
 exports.disableAccount = async (req, res) => {
   try {
@@ -152,11 +195,40 @@ exports.enableAccount = async(req,res)=>{
   }
 }
 
+// exports.sendAccountDetails = async (req, res) => {
+//   try {
+//     const users = await User.find({ role: { $ne: 'admin' } }).select('-password -otp'); // exclude sensitive fields
+//     return res.status(200).json({ users });
+//   } catch (error) {
+//     return res.status(500).json({ error: 'Internal server error' });
+//   }
+// }
 exports.sendAccountDetails = async (req, res) => {
   try {
-    const users = await User.find({ role: { $ne: 'admin' } }).select('-password -otp'); // exclude sensitive fields
+    // Fetch all users and exclude only sensitive fields
+    const users = await User.find().select('-password -otp');
     return res.status(200).json({ users });
   } catch (error) {
     return res.status(500).json({ error: 'Internal server error' });
   }
-}
+};
+
+//delete api here 
+exports.deleteAccount = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findByIdAndDelete(id);
+    if (!user) {
+      return res.status(404).json({ status: 'error', message: 'User not found' });
+    }
+    console.log(user,'uesr getting here ')
+
+    return res.status(200).json({ status: "OK", message: 'User deleted successfully' });
+  } catch (error) {
+    return res.status(500).json({
+      status: 'error',
+      message: 'Something went wrong. Please try again later.',
+    });
+  }
+};
