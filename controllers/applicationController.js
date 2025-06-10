@@ -14,6 +14,8 @@
 const { transporter } = require("../config/mailer")
 const Application = require("../models/Application")
 const User = require("../models/User")
+const ExcelJS = require('exceljs');
+
 
 // exports.submitApp = async (req, res) => {
 //     try {
@@ -159,4 +161,71 @@ exports.userDetail = async(req,res)=>{
         return res.status(500).json({ error: 'Internal server error' });
     }
     
+}
+exports.excelApplication =async(req,res)=>{
+     try {
+    // Fetch all applications with populated user data
+    const applications = await Application.find().populate('user').lean();
+
+    // Create a new Excel workbook and worksheet
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Applications');
+
+    // Define columns for the Excel sheet
+    worksheet.columns = [
+      { header: 'User ID', key: 'userId', width: 25 },
+      { header: 'Visa Type', key: 'visaType', width: 15 },
+     
+      { header: 'Father Name', key: 'father', width: 20 },
+      { header: 'Address', key: 'address', width: 30 },
+      { header: 'City', key: 'city', width: 15 },
+      { header: 'State', key: 'state', width: 15 },
+      { header: 'Status', key: 'status', width: 15 },
+      { header: 'Notes', key: 'notes', width: 30 },
+      { header: 'Approved By', key: 'approvedBy', width: 20 },
+      { header: 'Created At', key: 'createdAt', width: 20 },
+    
+    ];
+
+    // Add rows to the worksheet
+    applications.forEach(app => {
+      worksheet.addRow({
+        userId: app.user ? app.user._id : 'N/A',
+        visaType: app.visaType || 'N/A',
+        father: app.father || 'N/A',
+        address: app.address || 'N/A',
+        city: app.city || 'N/A',
+        state: app.state || 'N/A',
+        status: app.status || 'N/A',
+        notes: app.notes || 'N/A',
+        approvedBy: app.approvedBy || 'N/A',
+        createdAt: app.createdAt ? new Date(app.createdAt).toLocaleString() : 'N/A',
+      });
+    });
+
+    // Style the header row
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFDDDDDD' },
+    };
+
+    // Set response headers for file download
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename=Applications.xlsx'
+    );
+
+    // Write the workbook to the response
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error('Error exporting applications:', error);
+    res.status(500).json({ message: 'Error exporting applications to Excel' });
+  }
 }
