@@ -232,3 +232,22 @@ exports.deleteAccount = async (req, res) => {
     });
   }
 };
+
+//dashboard apis here 
+
+exports.userStatusCount = async (req, res) => {
+  try {
+    const activeCount = await User.countDocuments({ isActive: true });
+    const inactiveCount = await User.countDocuments({ isActive: false });
+
+    const stats = [
+      { name: "Active Users", value: activeCount, color: "#52c41a" },
+      { name: "Inactive Users", value: inactiveCount, color: "#ff4d4f" },
+    ];
+
+    return res.status(200).json({ status: 'OK', data: stats });
+  } catch (error) {
+    console.error("Error fetching user stats:", error);
+    return res.status(500).json({ status: 'error', message: 'Internal Server Error' });
+  }
+};
