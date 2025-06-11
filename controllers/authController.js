@@ -251,3 +251,20 @@ exports.userStatusCount = async (req, res) => {
     return res.status(500).json({ status: 'error', message: 'Internal Server Error' });
   }
 };
+
+exports.totalOfficers = async (req, res) => {
+  try {
+    const officerCount = await User.countDocuments({ role: 'officer' });
+
+    return res.status(200).json({
+      status: 'OK',
+      totalOfficers: officerCount
+    });
+  } catch (error) {
+    console.error("Error counting officers:", error);
+    return res.status(500).json({
+      status: 'error',
+      message: 'Internal Server Error'
+    });
+  }
+};

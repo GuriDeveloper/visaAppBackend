@@ -1,4 +1,4 @@
-const { submitApp, applications, userDetail, approveApplication, excelApplication } = require('../controllers/applicationController')
+const { submitApp, applications, userDetail, approveApplication, excelApplication, applicationStatusStats, monthlyApplications2025 } = require('../controllers/applicationController')
 const protect = require('../middlewares/auth')
 const upload = require('../middlewares/uploadMiddleware')
 
@@ -13,6 +13,8 @@ router.post('/submit',protect,upload.fields([
   .get('/user/:id',protect,userDetail)
   .patch("/status/:id",protect,approveApplication)
   .get("/applicationDetail",protect,excelApplication)
+  .get("/totalApplicationStatus",protect,applicationStatusStats)
+  .get("/monthWiseAPI",protect,monthlyApplications2025)
 
   
 

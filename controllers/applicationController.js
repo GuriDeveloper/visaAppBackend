@@ -244,3 +244,87 @@ exports.excelApplication = async (req, res) => {
     res.status(500).json({ message: "Error exporting applications to Excel" });
   }
 };
+
+
+//dashboard apis 
+
+exports.applicationStatusStats = async (req, res) => {
+  try {
+    // Count applications by status
+    const statusCounts = await Application.aggregate([
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Format for chart
+    const formattedData = [
+      { name: "Approved", value: 0, color: "#52c41a" },
+      { name: "Pending", value: 0, color: "#faad14" },
+      { name: "Rejected", value: 0, color: "#ff4d4f" },
+    ];
+
+    statusCounts.forEach(item => {
+      const index = formattedData.findIndex(d => d.name.toLowerCase() === item._id);
+      if (index !== -1) {
+        formattedData[index].value = item.count;
+      }
+    });
+
+    return res.status(200).json({ status: 'OK', data: formattedData });
+  } catch (error) {
+    console.error("Error fetching application status stats:", error);
+    return res.status(500).json({ status: 'error', message: 'Internal Server Error' });
+  }
+};
+
+
+//current month tak k api 
+
+exports.monthlyApplications2025 = async (req, res) => {
+  try {
+    const startOfYear = new Date('2025-01-01');
+    const now = new Date(); // current date
+
+    const data = await Application.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: startOfYear,
+            $lte: now
+          }
+        }
+      },
+      {
+        $group: {
+          _id: { month: { $month: "$createdAt" } },
+          applications: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { "_id.month": 1 }
+      }
+    ]);
+
+    // Map month number to name
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    const result = [];
+
+    for (let i = 0; i < now.getMonth() + 1; i++) {
+      const found = data.find(d => d._id.month === i + 1);
+      result.push({
+        month: monthNames[i],
+        applications: found ? found.applications : 0
+      });
+    }
+
+    return res.status(200).json({ status: "OK", data: result });
+  } catch (error) {
+    console.error("Error fetching monthly applications:", error);
+    return res.status(500).json({ status: "error", message: "Internal Server Error" });
+  }
+};
