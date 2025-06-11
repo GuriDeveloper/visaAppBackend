@@ -11,7 +11,7 @@
 //   status: { type: String, enum: ['pending', 'under review', 'approved', 'rejected'], default: 'pending' },
 //   notes: String,
 
-const { transporter } = require("../config/mailer")
+const  transporter  = require("../config/mailer")
 const Application = require("../models/Application")
 const User = require("../models/User")
 const ExcelJS = require('exceljs');
@@ -99,7 +99,7 @@ exports.applications = async (req, res) => {
 
 exports.approveApplication = async (req, res) => {
     try {
-        const { userId } = req.params; 
+        const { id } = req.params; 
         const approverId = req.id.id;  // ID of the user performing the approval (from auth middleware)
         const {approvedStatus,officerComment} = req.body
     // Fetch approver's name
@@ -110,7 +110,7 @@ exports.approveApplication = async (req, res) => {
 
 
         const updatedApp = await Application.findOneAndUpdate(
-            { user: userId },
+            { user: id },
             {
                 $set: {
                 status: approvedStatus,
@@ -126,11 +126,12 @@ exports.approveApplication = async (req, res) => {
         }
 
         // find user email and send the email to user
-        const findUser = await User.findById(userId).select('email')
+        const findUser = await User.findById(id).select('email')
+        console.log(findUser,'dddd')
 
-        const sendEmail = await transporter.sendMail({
+         await transporter.sendMail({
             from:process.env.EMAIL_USER,
-            to:findUser,
+            to:findUser?.email,
             subject:'Application Approved',
             html:`<h2>Your Applcation is Accepted!!</h2>`
         })
@@ -142,6 +143,7 @@ exports.approveApplication = async (req, res) => {
         });
 
     } catch (error) {
+      console.log(error,'gerr erorr')
         return res.status(500).json({ error: 'Internal server error' });
     }
 }
