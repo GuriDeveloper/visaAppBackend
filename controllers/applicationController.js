@@ -189,7 +189,6 @@ exports.excelApplication = async (req, res) => {
 
     // Define columns for the Excel sheet
     worksheet.columns = [
-      { header: "User ID", key: "userId", width: 25 },
       { header: "Visa Type", key: "visaType", width: 15 },
 
       { header: "Father Name", key: "father", width: 20 },
@@ -205,7 +204,6 @@ exports.excelApplication = async (req, res) => {
     // Add rows to the worksheet
     applications.forEach((app) => {
       worksheet.addRow({
-        userId: app.user ? app.user._id : "N/A",
         visaType: app.visaType || "N/A",
         father: app.father || "N/A",
         address: app.address || "N/A",
