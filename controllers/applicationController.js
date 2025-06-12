@@ -102,6 +102,7 @@ exports.approveApplication = async (req, res) => {
     const { id } = req.params;
     const approverId = req.id.id; // ID of the user performing the approval (from auth middleware)
     const { approvedStatus, officerComment } = req.body;
+    console.log(approvedStatus,officerComment,'get officer comment here ')
     // Fetch approver's name
     const approver = await User.findById(approverId).select("name");
     if (!approver) {

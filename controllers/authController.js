@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const transporter = require("../config/mailer");
 
 const generateToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
@@ -62,19 +63,44 @@ exports.login = async (req, res) => {
 
 };
 
+// exports.forgotPassword = async (req, res) => {
+//   const user = await User.findOne({ email: req.body.email });
+//   if (!user) return res.status(404).json({ message: 'User not found' });
+
+//   const resetToken = crypto.randomBytes(20).toString('hex');
+//   user.resetToken = resetToken;
+//   user.resetTokenExpire = Date.now() + 3600000; // 1 hour
+//   await user.save();
+
+//   const resetURL = `http://localhost:3000/reset-password/${resetToken}`;
+//   await sendEmail(user.email, 'Reset Password', `Reset here: ${resetURL}`);
+
+//   res.json({ message: 'Reset link sent to email' });
+// };
 exports.forgotPassword = async (req, res) => {
-  const user = await User.findOne({ email: req.body.email });
-  if (!user) return res.status(404).json({ message: 'User not found' });
+  try {
+    const user = await User.findOne({ email: req.body.email });
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
-  const resetToken = crypto.randomBytes(20).toString('hex');
-  user.resetToken = resetToken;
-  user.resetTokenExpire = Date.now() + 3600000; // 1 hour
-  await user.save();
+    const resetToken = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+    user.resetToken = resetToken;
+    user.resetTokenExpire = Date.now() + 3600000; // 1 hour
+    await user.save();
 
-  const resetURL = `http://localhost:3000/reset-password/${resetToken}`;
-  await sendEmail(user.email, 'Reset Password', `Reset here: ${resetURL}`);
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: user.email,
+      subject: 'Your OTP for Password Reset',
+      text: `Your One-Time Password (OTP) for resetting your account password is: ${resetToken}\n\nThis OTP is valid for 1 hour.`,
+    };
 
-  res.json({ message: 'Reset link sent to email' });
+    await transporter.sendMail(mailOptions);
+
+    res.json({ message: 'OTP sent to your email address' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
 };
 
 exports.resetPassword = async (req, res) => {
