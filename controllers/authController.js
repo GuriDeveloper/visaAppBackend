@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const generateToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
 exports.signup = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password,isActive } = req.body;
   try {
     if (!name || !email || !password) return res.status(400).json({ status: "error", message: "All fields are required!" })
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -14,7 +14,7 @@ exports.signup = async (req, res) => {
     // console.log('existing user  : ',exisitingUser)
     if (exisitingUser.length) return res.status(409).json({ status: 'error', message: "user already exists" })
     // console.log('user details : ',req.body)
-    const user = await User.create({ name, email, password: hashedPassword })
+    const user = await User.create({ name, email, password: hashedPassword ,isActive})
     return res.status(201).json({ status: "OK", message: "User created" })
   } catch (error) {
     return res.status(500).json({
