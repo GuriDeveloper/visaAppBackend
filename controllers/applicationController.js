@@ -329,3 +329,67 @@ exports.monthlyApplications2025 = async (req, res) => {
     return res.status(500).json({ status: "error", message: "Internal Server Error" });
   }
 };
+
+
+// PUT /api/account/:id/deactivate-and-reject
+
+
+exports.deactivateAndReject = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Find and deactivate the user
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ status: "error", message: "User not found" });
+    }
+
+    user.isActive = false;
+    await user.save();
+
+    // 2. Reject the user's application
+    const application = await Application.findOneAndUpdate(
+      { user: id },
+      {
+        $set: {
+          status: "rejected",
+          notes: "Account deactivated by system.",
+        },
+      },
+      { new: true }
+    );
+
+    if (!application) {
+      return res.status(404).json({ status: "error", message: "Application not found" });
+    }
+
+    // 3. Send email to user
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: user.email,
+      subject: "Account Deactivation & Application Rejection - VizaVerify",
+      html: `
+        <div style="font-family: Arial, sans-serif; border:1px solid #e5e5e5; padding: 20px; border-radius: 8px;">
+          <h2 style="color: #c40000;">VizaVerify Notification</h2>
+          <p style="color: red;"><strong>Your account has been deactivated and your visa application has been rejected.</strong></p>
+          <p>Please contact our support team if you believe this was a mistake.</p>
+          <p style="margin-top: 20px;">Regards,<br/><strong>VizaVerify Team</strong></p>
+        </div>
+      `,
+    });
+
+    return res.status(200).json({
+      status: "OK",
+      message: "User deactivated, application rejected, and email sent.",
+      user,
+      application,
+    });
+  } catch (error) {
+    console.error("Error in deactivateAndReject:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "Internal server error",
+    });
+  }
+};
+

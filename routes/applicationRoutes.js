@@ -1,4 +1,4 @@
-const { submitApp, applications, userDetail, approveApplication, excelApplication, applicationStatusStats, monthlyApplications2025 } = require('../controllers/applicationController')
+const { submitApp, applications, userDetail, approveApplication, excelApplication, applicationStatusStats, monthlyApplications2025, deactivateAndReject } = require('../controllers/applicationController')
 const protect = require('../middlewares/auth')
 const upload = require('../middlewares/uploadMiddleware')
 
@@ -15,6 +15,7 @@ router.post('/submit',protect,upload.fields([
   .get("/applicationDetail",protect,excelApplication)
   .get("/totalApplicationStatus",protect,applicationStatusStats)
   .get("/monthWiseAPI",protect,monthlyApplications2025)
+  .put("/accountDeactiveRejected/:id",protect,deactivateAndReject)
 
   
 
