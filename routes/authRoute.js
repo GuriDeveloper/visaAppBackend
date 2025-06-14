@@ -1,4 +1,4 @@
-const { signup, login, logout, createAccount, disableAccount, sendAccountDetails, enableAccount, deleteAccount, userStatusCount, totalOfficers } = require('../controllers/authController')
+const { signup, login, logout, createAccount, disableAccount, sendAccountDetails, enableAccount, deleteAccount, userStatusCount, totalOfficers, forgotPassword, resetPassword } = require('../controllers/authController')
 const protect = require('../middlewares/auth')
 
 const router = require('express').Router()
@@ -13,5 +13,7 @@ router.post('/signup/',signup)
 .delete("/delete-user/:id",protect,deleteAccount)
 .get("/statusUser",protect,userStatusCount)
 .get("/getOfficer",protect,totalOfficers)
+.post("/forgetPassword",protect,forgotPassword)
+.post("/resetPassword/:token",protect,resetPassword)
 
 module.exports = router

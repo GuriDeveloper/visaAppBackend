@@ -1,7 +1,7 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const transporter = require("../config/mailer");
+// const transporter = require("../config/mailer");
 
 const generateToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
@@ -77,25 +77,38 @@ exports.login = async (req, res) => {
 
 //   res.json({ message: 'Reset link sent to email' });
 // };
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
 exports.forgotPassword = async (req, res) => {
   try {
     const user = await User.findOne({ email: req.body.email });
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    const resetToken = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
-    user.resetToken = resetToken;
-    user.resetTokenExpire = Date.now() + 3600000; // 1 hour
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
+
+    user.resetToken = hashedOtp;
+    user.resetTokenExpire = Date.now() + 3600000; // valid for 1 hour
     await user.save();
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: user.email,
       subject: 'Your OTP for Password Reset',
-      text: `Your One-Time Password (OTP) for resetting your account password is: ${resetToken}\n\nThis OTP is valid for 1 hour.`,
+      text: `Your OTP for password reset is: ${otp}\n\nThis OTP is valid for 1 hour.`,
     };
 
     await transporter.sendMail(mailOptions);
-
     res.json({ message: 'OTP sent to your email address' });
   } catch (err) {
     console.error(err);
@@ -104,19 +117,38 @@ exports.forgotPassword = async (req, res) => {
 };
 
 exports.resetPassword = async (req, res) => {
-  const user = await User.findOne({
-    resetToken: req.params.token,
-    resetTokenExpire: { $gt: Date.now() },
-  });
-  if (!user) return res.status(400).json({ message: 'Invalid or expired token' });
+  try {
+    console.log(req.body,'request get ')
 
-  user.password = await bcrypt.hash(req.body.password, 10);
-  user.resetToken = undefined;
-  user.resetTokenExpire = undefined;
-  await user.save();
+    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
 
-  res.json({ message: 'Password reset successful' });
+    const user = await User.findOne({
+      resetToken: hashedToken,
+      resetTokenExpire: { $gt: Date.now() },
+    });
+console.log(hashedToken,'hassss')
+    if (!user) return res.status(400).json({ message: 'Invalid or expired OTP' });
+
+    user.password = await bcrypt.hash(req.body.password, 10);
+    user.resetToken = undefined;
+    user.resetTokenExpire = undefined;
+    await user.save();
+
+    // Optional: Automatically login user by setting cookie
+    // const token = createAuthToken(user); // if you use JWT
+    // res.cookie("token", token, {
+    //   httpOnly: true,
+    //   secure: true,
+    //   sameSite: 'Strict',
+    // });
+
+    res.json({ message: 'Password reset successful' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
 };
+
 
 exports.logout = async (req, res) => {
   res
